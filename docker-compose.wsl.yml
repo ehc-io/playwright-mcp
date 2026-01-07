@@ -1,0 +1,12 @@
+# Docker Compose override for WSL2/WSLg display
+# Usage: docker compose -f docker-compose.yml -f docker-compose.wsl.yml --profile headed up -d
+
+services:
+  playwright-headed:
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/mnt/wslg/runtime-dir}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - /mnt/wslg:/mnt/wslg:ro

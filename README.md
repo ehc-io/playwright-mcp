@@ -720,13 +720,98 @@ docker run -d -i --rm --init --pull=always \
   cli.js --headless --browser chromium --no-sandbox --port 8931
 ```
 
-The server will listen on host port **8931** and can be reached by any MCP client.  
+The server will listen on host port **8931** and can be reached by any MCP client.
 
 You can build the Docker image yourself.
 
 ```
 docker build -t mcr.microsoft.com/playwright/mcp .
 ```
+</details>
+
+<details>
+<summary><b>Docker Compose</b></summary>
+
+A Docker Compose setup is available for running the Playwright MCP server as a long-lived service with support for both headless and headed modes.
+
+**Features:**
+- Pre-baked Chromium browser for instant startup (no runtime downloads)
+- Dual-service setup: headless (port 3020) and headed (port 3021)
+- Cross-platform support (macOS, Linux, WSL2)
+- Health checks for container monitoring
+
+**Quick Start:**
+
+```bash
+# Start headless service only (default)
+docker compose up -d
+
+# Start both headless and headed services
+docker compose --profile headed up -d
+
+# View logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+```
+
+**MCP Client Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "url": "http://localhost:3020/mcp"
+    }
+  }
+}
+```
+
+For headed mode (visual debugging), use port 3021:
+
+```json
+{
+  "mcpServers": {
+    "playwright-headed": {
+      "url": "http://localhost:3021/mcp"
+    }
+  }
+}
+```
+
+**Platform-Specific Setup for Headed Mode:**
+
+| Platform | Command | Prerequisites |
+|----------|---------|---------------|
+| **macOS** | `docker compose --profile headed up -d` | Install [XQuartz](https://www.xquartz.org/), run `xhost +localhost` |
+| **Linux** | `docker compose -f docker-compose.yml -f docker-compose.linux.yml --profile headed up -d` | Run `xhost +local:docker` |
+| **WSL2** | `docker compose -f docker-compose.yml -f docker-compose.wsl.yml --profile headed up -d` | WSLg enabled (default in Windows 11) |
+
+**Environment Variables:**
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+# Port configuration
+MCP_HEADLESS_PORT=3020    # Headless service port
+MCP_HEADED_PORT=3021      # Headed service port
+
+# Display for headed mode (macOS default)
+DISPLAY=host.docker.internal:0
+```
+
+**Available Files:**
+
+| File | Description |
+|------|-------------|
+| `docker-compose.yml` | Main compose file with both services |
+| `docker-compose.linux.yml` | Override for Linux X11 socket mounting |
+| `docker-compose.wsl.yml` | Override for WSL2/WSLg display |
+| `docker/Dockerfile` | Multi-stage build with pre-baked Chromium |
+| `docker/entrypoint.sh` | Dynamic startup script |
+| `.env.example` | Environment configuration template |
+
 </details>
 
 <details>

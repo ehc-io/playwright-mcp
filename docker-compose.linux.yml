@@ -1,0 +1,12 @@
+# Docker Compose override for Linux X11 display
+# Usage: docker compose -f docker-compose.yml -f docker-compose.linux.yml --profile headed up -d
+#
+# Prerequisites:
+#   xhost +local:docker
+
+services:
+  playwright-headed:
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro

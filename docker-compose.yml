@@ -1,0 +1,69 @@
+# Playwright MCP Server - Docker Compose
+# Dual-service setup: headless (3020) and headed (3021)
+#
+# Usage:
+#   docker compose up -d                     # Start headless only (default)
+#   docker compose --profile headed up -d    # Start both services
+#
+# Client connection:
+#   Headless: http://localhost:3020/mcp
+#   Headed:   http://localhost:3021/mcp
+#
+# Headed mode setup by platform:
+#   macOS:  Install XQuartz, run: xhost +localhost, set DISPLAY=host.docker.internal:0
+#   Linux:  Run: xhost +local:docker, set DISPLAY=:0
+#   WSL2:   Set DISPLAY=:0 and WSLG_PATH=/mnt/wslg, use docker-compose.wsl.yml override
+
+services:
+  # Headless service - for production/CI use
+  playwright-headless:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: playwright-mcp:headless
+    container_name: playwright-mcp-headless
+    ports:
+      - "${MCP_HEADLESS_PORT:-3020}:3020"
+    environment:
+      - MCP_PORT=3020
+      - HEADLESS=true
+    volumes:
+      - headless-output:/tmp/playwright-output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3020/sse').then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Headed service - for visual debugging (requires display)
+  playwright-headed:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: playwright-mcp:headed
+    container_name: playwright-mcp-headed
+    ports:
+      - "${MCP_HEADED_PORT:-3021}:3021"
+    environment:
+      - MCP_PORT=3021
+      - HEADLESS=false
+      # macOS: host.docker.internal:0 (requires XQuartz)
+      # Linux: :0 (requires xhost +local:docker)
+      - DISPLAY=${DISPLAY:-host.docker.internal:0}
+    volumes:
+      - headed-output:/tmp/playwright-output
+    restart: unless-stopped
+    profiles:
+      - headed
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3021/sse').then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  headless-output:
+  headed-output:
