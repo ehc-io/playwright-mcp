@@ -19,7 +19,8 @@ RUN --mount=type=cache,target=/root/.npm,sharing=locked,id=npm-cache \
     --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     npm ci --omit=dev && \
-    npx -y playwright-core install-deps chromium
+    npx -y playwright-core install-deps chromium && \
+    sed -i '/if (!allowAnyHost)/,/^    }/d' node_modules/playwright/lib/mcp/sdk/http.js
 
 # ------------------------------
 # Browser: Pre-download Chromium

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 # Playwright MCP Server Entrypoint
@@ -8,17 +8,17 @@ set -e
 MCP_PORT="${MCP_PORT:-3020}"
 HEADLESS="${HEADLESS:-true}"
 
-# Build argument list
-ARGS="--port ${MCP_PORT} --host 0.0.0.0 --browser chromium --no-sandbox"
+# Build argument array (using bash array to properly handle special characters)
+ARGS=("--port" "${MCP_PORT}" "--host" "0.0.0.0" "--allowed-hosts" "*" "--browser" "chromium" "--no-sandbox")
 
 # Add headless flag if enabled
 if [ "${HEADLESS}" = "true" ]; then
-    ARGS="${ARGS} --headless"
+    ARGS+=("--headless")
 fi
 
 echo "Starting Playwright MCP Server..."
 echo "  Port: ${MCP_PORT}"
 echo "  Headless: ${HEADLESS}"
-echo "  Command: node cli.js ${ARGS}"
+echo "  Command: node cli.js ${ARGS[*]}"
 
-exec node cli.js ${ARGS}
+exec node cli.js "${ARGS[@]}"
